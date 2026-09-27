@@ -52,6 +52,8 @@ test('capabilities.skills lists the six skills with resolvable paths', () => {
   }
 });
 
+// NB: pin + plugin/package agreement intentionally overlaps scripts/check-versions.js
+// (9-file + tag guard); the marketplace-entry version check lives only here.
 test('versions agree across plugin, marketplace entry, and package', () => {
   const pluginVersion = load(PLUGIN_MANIFEST).version;
   const marketplace = load(MARKETPLACE_MANIFEST);
@@ -78,6 +80,9 @@ test('muse plugins validate passes', (t) => {
   // symlink entries, so build artifacts like ponytail-mcp/node_modules/.bin
   // (installed by CI before the tests run) would fail validation even though
   // the committed package is clean.
+  // NB: this validates committed HEAD, not the worktree — uncommitted
+  // schema-only edits surface at CI (which tests the commit itself), while
+  // live-tree id/path/version drift is already caught by the two tests above.
   const stage = fs.mkdtempSync(path.join(os.tmpdir(), 'ponytail-muse-validate-'));
   try {
     const archive = spawnSync('git', ['archive', 'HEAD'], {

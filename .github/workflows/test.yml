@@ -28,7 +28,10 @@ jobs:
 
       - name: Install Muse CLI for manifest validation
         run: |
-          curl -fsSL https://dev.meta.ai/install.sh | bash
+          # Upstream offers no pinned release channel (floating by design);
+          # download-then-run at least avoids executing a truncated pipe.
+          curl -fsSL -o /tmp/muse-install.sh https://dev.meta.ai/install.sh
+          bash /tmp/muse-install.sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           # GITHUB_PATH only affects later steps; verify the binary here so a
           # moved install path fails loudly instead of silently skipping validation.
