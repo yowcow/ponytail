@@ -72,7 +72,7 @@ test('muse plugins validate passes', (t) => {
   // `plugins` commands sit behind the experimental plugins gate; without the
   // cached feature flags of an interactive login (fresh HOME, CI) `validate`
   // refuses with "plugins are not available in this build".
-  const result = spawnSync('muse', ['plugins', 'validate', '.'], {
+  const result = spawnSync('muse', ['plugins', 'validate', '.', '--json'], {
     cwd: root,
     encoding: 'utf8',
     env: { ...process.env, MUSE_EXPERIMENTAL_PLUGINS: 'on' },
@@ -81,6 +81,16 @@ test('muse plugins validate passes', (t) => {
     t.skip('muse CLI not available');
     return;
   }
-  assert.equal(result.status, 0, `muse plugins validate failed: ${result.stderr}`);
-  assert.match(result.stdout, /^valid\s/m);
+  // Surface the structured diagnostics on failure: the exit code alone hides
+  // which check reported what, which is exactly what a CI log needs to show.
+  let report = null;
+  try {
+    report = JSON.parse(result.stdout);
+  } catch {
+    assert.fail(`muse plugins validate emitted no JSON report (exit ${result.status}): ${result.stderr}${result.stdout}`);
+  }
+  const diagnostics = (report.diagnostics || [])
+    .map((d) => `${d.severity} ${d.code} ${d.path}: ${d.message}`)
+    .join('\n');
+  assert.equal(report.valid, true, `muse plugins validate failed:\n${diagnostics}\nstderr: ${result.stderr}`);
 });
