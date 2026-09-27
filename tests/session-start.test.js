@@ -36,12 +36,15 @@ function longPathHook() {
   return copy;
 }
 
-// PATH holding bash but no cksum, so the truncation branch runs without it.
+// PATH holding bash and dirname but no cksum, so the truncation branch runs
+// without it (bash-only would also drop dirname and skip the branch).
 function bashOnlyPath() {
-  const out = spawnSync('bash', ['-c', 'command -v bash'], { encoding: 'utf8' });
+  const out = spawnSync('bash', ['-c', 'command -v bash; command -v dirname'], { encoding: 'utf8' });
+  const [bashBin, dirnameBin] = out.stdout.trim().split('\n');
   const bin = path.join(temp, 'bash-only-bin');
   fs.mkdirSync(bin, { recursive: true });
-  fs.symlinkSync(out.stdout.trim(), path.join(bin, 'bash'));
+  fs.symlinkSync(bashBin, path.join(bin, 'bash'));
+  if (dirnameBin) fs.symlinkSync(dirnameBin, path.join(bin, 'dirname'));
   return bin;
 }
 
@@ -81,4 +84,6 @@ test('still exits 0 with valid JSON when cksum is missing', (t) => {
   });
   const body = parseStdout(r);
   assert.equal(body.hookSpecificOutput.hookEventName, 'SessionStart');
+  // Degraded shape: truncation ran, checksum empty — still valid JSON.
+  assert.match(body.hookSpecificOutput.additionalContext, /\.\.\.[0-9]*:/);
 });
