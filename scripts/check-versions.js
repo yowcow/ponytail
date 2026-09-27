@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Version-consistency guard. Ponytail declares its version in seven files across
-// five host ecosystems, and every release bumps all of them by hand.
+// Version-consistency guard. Ponytail declares its version in nine files across
+// six host ecosystems, and every release bumps all of them by hand.
 //
 // tests/gemini-extension.test.js already checks the four plugin manifests agree
 // with each other, but that can't catch the failure mode that shipped in v4.8.0:
@@ -23,6 +23,7 @@ const VERSION_FILES = [
   '.codex-plugin/plugin.json',   // Codex plugin
   '.devin-plugin/plugin.json',   // Devin CLI plugin
   '.github/plugin/plugin.json',  // Copilot plugin
+  '.muse-plugin/plugin.json',    // Muse Code plugin (marketplace.json holds no top-level version)
   '.qoder-plugin/plugin.json',   // Qoder plugin
   'gemini-extension.json',       // Gemini CLI extension
   'package.json',                // pi-package / repo root
