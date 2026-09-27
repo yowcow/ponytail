@@ -104,13 +104,13 @@ test('muse plugins validate passes', (t) => {
       t.skip('git not available');
       return;
     }
-    assert.equal(archive.status, 0, `git archive HEAD failed: ${archive.stderr}`);
+    assert.equal(archive.status, 0, `git archive HEAD failed: ${archive.stderr}${archive.error ? ` (${archive.error})` : ''}`);
     const untar = spawnSync('tar', ['-x', '-C', stage], { input: archive.stdout, timeout: 120_000 });
     if (untar.error && untar.error.code === 'ENOENT') {
       t.skip('tar not available');
       return;
     }
-    assert.equal(untar.status, 0, `unpacking pristine tree failed: ${untar.stderr}`);
+    assert.equal(untar.status, 0, `unpacking pristine tree failed: ${untar.stderr}${untar.error ? ` (${untar.error})` : ''}`);
     const result = spawnSync('muse', ['plugins', 'validate', stage, '--json'], {
       encoding: 'utf8',
       env: { ...process.env, MUSE_EXPERIMENTAL_PLUGINS: 'on' },
@@ -134,7 +134,7 @@ test('muse plugins validate passes', (t) => {
     const diagnostics = (Array.isArray(report.diagnostics) ? report.diagnostics : [])
       .map((d) => `${d.severity} ${d.code} ${d.path}: ${d.message}`)
       .join('\n');
-    assert.equal(report.valid, true, `muse plugins validate failed:\n${diagnostics}\nstderr: ${result.stderr}`);
+    assert.equal(report.valid, true, `muse plugins validate failed:\n${diagnostics}\nstderr: ${result.stderr}${result.error ? ` (${result.error})` : ''}`);
   } finally {
     fs.rmSync(stage, { recursive: true, force: true });
   }
