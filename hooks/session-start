@@ -10,7 +10,7 @@
 # dynamic. The full rules live in AGENTS.md and skills/ponytail/SKILL.md and
 # are read on demand, outside additionalContext's truncation budget.
 
-set -euo pipefail
+set -uo pipefail
 
 # CDPATH is cleared rather than trusted: `cd` searches it for a relative
 # operand and echoes the directory it landed on, so an exported CDPATH would
@@ -70,7 +70,7 @@ escape_for_json() {
 # characters before escaping: after is too late, a byte cut there can split
 # an escape or a multibyte character and invalidate the whole object. Even
 # at 6x escape expansion this stays inside both budgets. The suffix is paired
-# with a POSIX cksum of the complete root, so separate installs stay distinct.
+# with the CRC from POSIX cksum of the complete root, so separate installs stay distinct.
 root_len=${#plugin_root}
 if [ "$root_len" -gt 100 ]; then
   root_checksum="$(printf '%s' "$plugin_root" | cksum)"
