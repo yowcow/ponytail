@@ -7,6 +7,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
@@ -72,25 +73,50 @@ test('muse plugins validate passes', (t) => {
   // `plugins` commands sit behind the experimental plugins gate; without the
   // cached feature flags of an interactive login (fresh HOME, CI) `validate`
   // refuses with "plugins are not available in this build".
-  const result = spawnSync('muse', ['plugins', 'validate', '.', '--json'], {
-    cwd: root,
-    encoding: 'utf8',
-    env: { ...process.env, MUSE_EXPERIMENTAL_PLUGINS: 'on' },
-  });
-  if (result.error && result.error.code === 'ENOENT') {
-    t.skip('muse CLI not available');
-    return;
-  }
-  // Surface the structured diagnostics on failure: the exit code alone hides
-  // which check reported what, which is exactly what a CI log needs to show.
-  let report = null;
+  // Validate a pristine export of the committed tree, not the live worktree:
+  // `muse plugins validate` scans the whole target dir and fails closed on
+  // symlink entries, so build artifacts like ponytail-mcp/node_modules/.bin
+  // (installed by CI before the tests run) would fail validation even though
+  // the committed package is clean.
+  const stage = fs.mkdtempSync(path.join(os.tmpdir(), 'ponytail-muse-validate-'));
   try {
-    report = JSON.parse(result.stdout);
-  } catch {
-    assert.fail(`muse plugins validate emitted no JSON report (exit ${result.status}): ${result.stderr}${result.stdout}`);
+    const archive = spawnSync('git', ['archive', 'HEAD'], {
+      cwd: root,
+      encoding: 'buffer',
+      maxBuffer: 32 * 1024 * 1024,
+    });
+    if (archive.error && archive.error.code === 'ENOENT') {
+      t.skip('git not available');
+      return;
+    }
+    assert.equal(archive.status, 0, `git archive HEAD failed: ${archive.stderr}`);
+    const untar = spawnSync('tar', ['-x', '-C', stage], { input: archive.stdout });
+    if (untar.error && untar.error.code === 'ENOENT') {
+      t.skip('tar not available');
+      return;
+    }
+    assert.equal(untar.status, 0, `unpacking pristine tree failed: ${untar.stderr}`);
+    const result = spawnSync('muse', ['plugins', 'validate', stage, '--json'], {
+      encoding: 'utf8',
+      env: { ...process.env, MUSE_EXPERIMENTAL_PLUGINS: 'on' },
+    });
+    if (result.error && result.error.code === 'ENOENT') {
+      t.skip('muse CLI not available');
+      return;
+    }
+    // Surface the structured diagnostics on failure: the exit code alone hides
+    // which check reported what, which is exactly what a CI log needs to show.
+    let report = null;
+    try {
+      report = JSON.parse(result.stdout);
+    } catch {
+      assert.fail(`muse plugins validate emitted no JSON report (exit ${result.status}): ${result.stderr}${result.stdout}`);
+    }
+    const diagnostics = (report.diagnostics || [])
+      .map((d) => `${d.severity} ${d.code} ${d.path}: ${d.message}`)
+      .join('\n');
+    assert.equal(report.valid, true, `muse plugins validate failed:\n${diagnostics}\nstderr: ${result.stderr}`);
+  } finally {
+    fs.rmSync(stage, { recursive: true, force: true });
   }
-  const diagnostics = (report.diagnostics || [])
-    .map((d) => `${d.severity} ${d.code} ${d.path}: ${d.message}`)
-    .join('\n');
-  assert.equal(report.valid, true, `muse plugins validate failed:\n${diagnostics}\nstderr: ${result.stderr}`);
 });
