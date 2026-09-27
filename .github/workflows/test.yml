@@ -16,6 +16,13 @@ jobs:
         with:
           node-version: '22'
 
+      # Cheap dependency-free static checks first so they fail fast.
+      - name: Check rule copies
+        run: node scripts/check-rule-copies.js
+
+      - name: Check version consistency
+        run: node scripts/check-versions.js
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -26,11 +33,18 @@ jobs:
       - name: Install MCP deps
         run: npm install --prefix ponytail-mcp
 
-      - name: Check rule copies
-        run: node scripts/check-rule-copies.js
-
-      - name: Check version consistency
-        run: node scripts/check-versions.js
+      - name: Install Muse CLI for manifest validation
+        run: |
+          # After the cheap static checks so they fail fast without a download.
+          # Upstream offers no pinned release channel (floating by design);
+          # download-then-run at least avoids executing a truncated pipe.
+          curl -fsSL -o /tmp/muse-install.sh https://dev.meta.ai/install.sh
+          bash /tmp/muse-install.sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          # GITHUB_PATH only affects later steps; verify the binary here so a
+          # moved install path fails loudly instead of silently skipping validation.
+          export PATH="$HOME/.local/bin:$PATH"
+          command -v muse
 
       - name: Run tests
         run: npm test
