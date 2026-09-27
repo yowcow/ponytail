@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "name": "ponytail",
+  "displayName": "ponytail",
+  "version": "4.10.0",
+  "description": "Lazy senior dev mode. Forces the simplest, shortest solution that actually works: YAGNI, stdlib first, no unrequested abstractions.",
+  "author": {
+    "name": "Dietrich Gebert",
+    "url": "https://github.com/DietrichGebert"
+  },
+  "compat": {
+    "source": "native",
+    "manifestDir": ".muse-plugin"
+  },
+  "capabilities": {
+    "skills": [
+      {
+        "id": "ponytail",
+        "path": "skills/ponytail/SKILL.md"
+      },
+      {
+        "id": "ponytail-review",
+        "path": "skills/ponytail-review/SKILL.md"
+      },
+      {
+        "id": "ponytail-audit",
+        "path": "skills/ponytail-audit/SKILL.md"
+      },
+      {
+        "id": "ponytail-debt",
+        "path": "skills/ponytail-debt/SKILL.md"
+      },
+      {
+        "id": "ponytail-gain",
+        "path": "skills/ponytail-gain/SKILL.md"
+      },
+      {
+        "id": "ponytail-help",
+        "path": "skills/ponytail-help/SKILL.md"
+      }
+    ]
+  }
+}
