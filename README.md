@@ -148,7 +148,9 @@ MUSE_EXPERIMENTAL_PLUGINS=on muse plugins install ./
 MUSE_EXPERIMENTAL_PLUGINS=on muse plugins approve ponytail
 ```
 
-`approve` trusts the SessionStart hook that injects the ruleset stub — it runs plugin code, so review it first with `muse plugins inspect ponytail`; without the env var (fresh HOME, CI) the `plugins` commands refuse with `plugins are not available in this build`. Prefix every `muse plugins ...` command in this README with `MUSE_EXPERIMENTAL_PLUGINS=on` as in the blocks above; the prefix is omitted from inline mentions and the uninstall table for brevity.
+`approve` trusts the SessionStart hook that injects the ruleset stub — it runs plugin code, so review it first with `muse plugins inspect ponytail`; without the env var (fresh HOME, CI) the `plugins` commands refuse with `plugins are not available in this build`.
+
+Prefix every `muse plugins ...` command in this README with `MUSE_EXPERIMENTAL_PLUGINS=on` as in the blocks above; the prefix is omitted from inline mentions and the uninstall table for brevity.
 
 Marketplace alternative — the source must be Git (a plain directory snapshots zero plugins):
 
