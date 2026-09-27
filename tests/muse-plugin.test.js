@@ -98,13 +98,14 @@ test('muse plugins validate passes', (t) => {
       cwd: root,
       encoding: 'buffer',
       maxBuffer: 32 * 1024 * 1024,
+      timeout: 120_000,
     });
     if (archive.error && archive.error.code === 'ENOENT') {
       t.skip('git not available');
       return;
     }
     assert.equal(archive.status, 0, `git archive HEAD failed: ${archive.stderr}`);
-    const untar = spawnSync('tar', ['-x', '-C', stage], { input: archive.stdout });
+    const untar = spawnSync('tar', ['-x', '-C', stage], { input: archive.stdout, timeout: 120_000 });
     if (untar.error && untar.error.code === 'ENOENT') {
       t.skip('tar not available');
       return;
@@ -113,6 +114,7 @@ test('muse plugins validate passes', (t) => {
     const result = spawnSync('muse', ['plugins', 'validate', stage, '--json'], {
       encoding: 'utf8',
       env: { ...process.env, MUSE_EXPERIMENTAL_PLUGINS: 'on' },
+      timeout: 120_000,
     });
     if (result.error && result.error.code === 'ENOENT') {
       t.skip('muse CLI not available');
