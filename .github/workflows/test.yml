@@ -35,12 +35,6 @@ jobs:
           export PATH="$HOME/.local/bin:$PATH"
           command -v muse
 
-      - name: Debug muse validate (temporary)
-        run: |
-          command -v muse
-          muse --version
-          MUSE_EXPERIMENTAL_PLUGINS=on muse plugins validate . --json || echo "validate-exit=$?"
-
       - name: Check rule copies
         run: node scripts/check-rule-copies.js
 
