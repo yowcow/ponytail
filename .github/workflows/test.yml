@@ -26,6 +26,15 @@ jobs:
       - name: Install MCP deps
         run: npm install --prefix ponytail-mcp
 
+      - name: Install Muse CLI for manifest validation
+        run: |
+          curl -fsSL https://dev.meta.ai/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          # GITHUB_PATH only affects later steps; verify the binary here so a
+          # moved install path fails loudly instead of silently skipping validation.
+          export PATH="$HOME/.local/bin:$PATH"
+          command -v muse
+
       - name: Check rule copies
         run: node scripts/check-rule-copies.js
 
