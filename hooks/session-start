@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# SessionStart hook: put a summary stub of ponytail in context.
+#
+# Muse Code reads a JSON object on stdout and injects
+# hookSpecificOutput.additionalContext. The JSON string is escaped with bash
+# parameter substitution rather than jq, because the hook has to run wherever
+# the plugin is installed and jq is not guaranteed there.
+#
+# The stub is static and small (~0.6KB decoded): only the install path is
+# dynamic. The full rules live in AGENTS.md and skills/ponytail/SKILL.md and
+# are read on demand, outside additionalContext's truncation budget.
+
+set -euo pipefail
+
+# CDPATH is cleared rather than trusted: `cd` searches it for a relative
+# operand and echoes the directory it landed on, so an exported CDPATH would
+# resolve this to a tree the hook was never invoked from and fold the echoed
+# line into the value. That path is printed below as the block's identity, and
+# a wrong identity is worse than none -- it is the line a reader trusts to tell
+# two installs apart.
+hook_dir="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
+# The install this hook is running out of. Two installs of ponytail each run
+# their own copy of this script and inject a near-identical block; without the
+# tree named in the block, the two cannot be told apart by reading them. The
+# value was already being computed here and thrown away -- $CLAUDE_PLUGIN_ROOT
+# is deliberately not consulted, so what is printed stays the tree this file
+# actually ran from. `dirname` rather than ${hook_dir%/*}, which yields the
+# empty string for a hook_dir of `/hooks`.
+plugin_root="$(dirname -- "$hook_dir")"
+
+escape_for_json() {
+    local s="$1" o c u
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\n'/\\n}"
+    s="${s//$'\r'/\\r}"
+    s="${s//$'\t'/\\t}"
+    # Everything below is guarded: every one of the 28 characters it rewrites
+    # matches [[:cntrl:]], so a string failing the guard carried none of them and
+    # each skipped pass would have been a no-op -- and unguarded that is 28
+    # further walks of the short install path. The guard also fires on DEL
+    # and, in a UTF-8 locale, on U+0080..U+009F, which JSON allows raw: those
+    # runs make 28 no-op passes, a wasted walk rather than a wrong one. The 26
+    # C0 controls with no two-character escape go out as \u00XX. One left raw
+    # invalidates the whole object: Muse Code drops the block, so the stub
+    # never arrives, and this hook still exits 0 --
+    # nothing says so. NUL is absent from the list because a bash string cannot
+    # hold one. `printf '%b'` rather than a computed format string, which is
+    # SC2059. The codes are spelled in octal, the base `\\0NNN` wants, and printf
+    # reads a leading-zero argument as octal too -- so neither line needs a
+    # subshell to change base.
+    if [[ $s == *[[:cntrl:]]* ]]; then
+        s="${s//$'\b'/\\b}"
+        s="${s//$'\f'/\\f}"
+        for o in 001 002 003 004 005 006 007 013 016 017 020 021 022 023 024 025 026 027 030 031 032 033 034 035 036 037; do
+            printf -v c '%b' "\\0$o"
+            printf -v u '\\u%04x' "0$o"
+            s="${s//"$c"/"$u"}"
+        done
+    fi
+    printf '%s' "$s"
+}
+
+# `"`, `\` and the C0 controls a path can hold are all legal in a POSIX
+# filename, and an install path carrying any of them would close or
+# invalidate the JSON string early -- taking the whole stub with it.
+#
+# The identity is the only dynamic part of the stub, so a long install path
+# must not push it past its budget. Truncate the raw path to its last 100
+# characters before escaping: after is too late, a byte cut there can split
+# an escape or a multibyte character and invalidate the whole object. Even
+# at 6x escape expansion this stays inside both budgets. The suffix is paired
+# with a POSIX cksum of the complete root, so separate installs stay distinct.
+root_len=${#plugin_root}
+if [ "$root_len" -gt 100 ]; then
+  root_checksum="$(printf '%s' "$plugin_root" | cksum)"
+  root_checksum="${root_checksum%% *}"
+  suffix="${plugin_root:$((root_len - 100))}"
+  # A byte cut under LC_ALL=C can start mid-character: drop dangling UTF-8
+  # continuation bytes so the head is character-aligned. The tail needs
+  # nothing -- it is the string's original end. Under a UTF-8 locale the cut
+  # is already aligned and this strips nothing.
+  while [[ $suffix == [$'\200'-$'\277']* ]]; do
+    suffix="${suffix:1}"
+  done
+  plugin_root="...${root_checksum}:${suffix}"
+fi
+escaped_root=$(escape_for_json "$plugin_root")
+
+context="<!-- ponytail-bootstrap:ponytail -->\n<EXTREMELY_IMPORTANT>\nponytail's lazy-senior-dev rules — summary stub (not the full ruleset) from the ponytail install at ${escaped_root}:\n\nYou are a lazy senior developer. Lazy means efficient, not careless. The best code is the code never written. Before writing any code, stop at the first rung that holds: (1) does this need to be built at all? (YAGNI) (2) does it already exist here? reuse it (3) stdlib? (4) native platform feature? (5) installed dependency? (6) one line? (7) only then write the minimum code that works. Bug fix = root cause, not symptom: fix the shared function once. No unrequested abstractions, dependencies, or boilerplate.\n\nThe full rules live in AGENTS.md and skills/ponytail/SKILL.md of this install; this stub is only a pointer.\n</EXTREMELY_IMPORTANT>"
+
+# printf rather than a heredoc: bash 5.3+ hangs on heredocs in this position.
+printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$context"
+
+exit 0

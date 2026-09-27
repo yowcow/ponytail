@@ -38,6 +38,17 @@
         "id": "ponytail-help",
         "path": "skills/ponytail-help/SKILL.md"
       }
+    ],
+    "hooks": [
+      {
+        "id": "session-start",
+        "event": "SessionStart",
+        "command": [
+          "bash",
+          "hooks/session-start"
+        ],
+        "timeoutMs": 5000
+      }
     ]
   }
 }
