@@ -126,10 +126,10 @@ test('muse plugins validate passes', (t) => {
     try {
       report = JSON.parse(result.stdout);
     } catch {
-      assert.fail(`muse plugins validate emitted no JSON report (exit ${result.status}): ${result.stderr}${result.stdout}`);
+      assert.fail(`muse plugins validate emitted no JSON report (exit ${result.status}): ${result.stderr}${result.stdout}${result.error ? ` (${result.error})` : ''}`);
     }
     if (typeof report !== 'object' || report === null) {
-      assert.fail(`muse plugins validate emitted non-object JSON report (exit ${result.status}): ${result.stderr}${result.stdout}`);
+      assert.fail(`muse plugins validate emitted non-object JSON report (exit ${result.status}): ${result.stderr}${result.stdout}${result.error ? ` (${result.error})` : ''}`);
     }
     const diagnostics = (Array.isArray(report.diagnostics) ? report.diagnostics : [])
       .map((d) => `${d.severity} ${d.code} ${d.path}: ${d.message}`)
