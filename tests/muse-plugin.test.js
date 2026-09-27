@@ -129,7 +129,7 @@ test('muse plugins validate passes', (t) => {
     if (typeof report !== 'object' || report === null) {
       assert.fail(`muse plugins validate emitted non-object JSON report (exit ${result.status}): ${result.stderr}${result.stdout}`);
     }
-    const diagnostics = (report.diagnostics || [])
+    const diagnostics = (Array.isArray(report.diagnostics) ? report.diagnostics : [])
       .map((d) => `${d.severity} ${d.code} ${d.path}: ${d.message}`)
       .join('\n');
     assert.equal(report.valid, true, `muse plugins validate failed:\n${diagnostics}\nstderr: ${result.stderr}`);
