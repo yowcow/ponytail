@@ -50,6 +50,15 @@ test('capabilities.skills lists the six skills with resolvable paths', () => {
       `skill path missing: ${skill.path}`,
     );
   }
+  // Reverse drift: every skills/<name>/SKILL.md on disk must be registered.
+  const skillDirs = fs.readdirSync(path.join(root, 'skills')).filter((name) =>
+    fs.existsSync(path.join(root, 'skills', name, 'SKILL.md')),
+  );
+  assert.deepEqual(
+    [...skillDirs].sort(),
+    skills.map((s) => s.id).sort(),
+    'unregistered skill on disk: capabilities.skills must list every skills/<name>/SKILL.md',
+  );
 });
 
 // NB: pin + plugin/package agreement intentionally overlaps scripts/check-versions.js
@@ -116,6 +125,9 @@ test('muse plugins validate passes', (t) => {
       report = JSON.parse(result.stdout);
     } catch {
       assert.fail(`muse plugins validate emitted no JSON report (exit ${result.status}): ${result.stderr}${result.stdout}`);
+    }
+    if (typeof report !== 'object' || report === null) {
+      assert.fail(`muse plugins validate emitted non-object JSON report (exit ${result.status}): ${result.stderr}${result.stdout}`);
     }
     const diagnostics = (report.diagnostics || [])
       .map((d) => `${d.severity} ${d.code} ${d.path}: ${d.message}`)
