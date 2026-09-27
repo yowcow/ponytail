@@ -148,17 +148,17 @@ MUSE_EXPERIMENTAL_PLUGINS=on muse plugins install ./
 MUSE_EXPERIMENTAL_PLUGINS=on muse plugins approve ponytail
 ```
 
-`approve` trusts the SessionStart hook that injects the ruleset stub — it runs plugin code, so review it first with `muse plugins inspect ponytail`; without the env var (fresh HOME, CI) the `plugins` commands refuse with `plugins are not available in this build`.
+`approve` trusts the SessionStart hook that injects the ruleset stub — it runs plugin code, so review it first with `muse plugins inspect ponytail`; without the env var (fresh HOME, CI) the `plugins` commands refuse with `plugins are not available in this build`. Prefix every `muse plugins ...` command in this README with `MUSE_EXPERIMENTAL_PLUGINS=on` as in the blocks above; the prefix is omitted from inline mentions and the uninstall table for brevity.
 
 Marketplace alternative — the source must be Git (a plain directory snapshots zero plugins):
 
 ```bash
-MUSE_EXPERIMENTAL_PLUGINS=on muse plugins marketplace add ponytail https://github.com/yowcow/ponytail
+MUSE_EXPERIMENTAL_PLUGINS=on muse plugins marketplace add ponytail https://github.com/DietrichGebert/ponytail
 MUSE_EXPERIMENTAL_PLUGINS=on muse plugins install ponytail@ponytail
 MUSE_EXPERIMENTAL_PLUGINS=on muse plugins approve ponytail
 ```
 
-After pulling, `muse plugins update ponytail` refreshes the install from its source; `muse plugins inspect ponytail` shows the version, skills, and hooks. Measured with Muse Code 1.4.0 / plugin 4.10.0 (id `ponytail`, six skills, one `session-start` hook), each sequence reproduced under a hermetic `HOME`.
+Afterward, `muse plugins update ponytail` refreshes the install from its source; `muse plugins inspect ponytail` shows the version, skills, and hooks. Measured with Muse Code 1.4.0 / plugin 4.10.0 (id `ponytail`, six skills, one `session-start` hook), each sequence reproduced under a hermetic `HOME`.
 
 ### Codex
 
