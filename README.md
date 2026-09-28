@@ -139,6 +139,29 @@ The Claude Code and Codex plugins (and the Cursor hooks) run two tiny Node.js li
 
 Same steps in the Claude Code Desktop app's Code tab: type the two `/plugin` commands above into the prompt box, or click the **+** button next to it, choose **Plugins** → **Add plugin** to browse your configured marketplaces, and manage marketplaces from **Customize** in the sidebar.
 
+### Muse Code
+
+From a checkout:
+
+```bash
+MUSE_EXPERIMENTAL_PLUGINS=on muse plugins install ./
+MUSE_EXPERIMENTAL_PLUGINS=on muse plugins approve ponytail
+```
+
+`approve` trusts the SessionStart hook that injects the ruleset stub — it runs plugin code, so review it first with `muse plugins inspect ponytail`; without the env var (fresh HOME, CI) the `plugins` commands refuse with `plugins are not available in this build`.
+
+Prefix every `muse plugins ...` command in this README with `MUSE_EXPERIMENTAL_PLUGINS=on` as in the blocks above; the prefix is omitted from inline mentions and the uninstall table for brevity.
+
+Marketplace alternative — the source must be Git (a plain directory snapshots zero plugins):
+
+```bash
+MUSE_EXPERIMENTAL_PLUGINS=on muse plugins marketplace add ponytail https://github.com/DietrichGebert/ponytail
+MUSE_EXPERIMENTAL_PLUGINS=on muse plugins install ponytail@ponytail
+MUSE_EXPERIMENTAL_PLUGINS=on muse plugins approve ponytail
+```
+
+Afterward, `muse plugins update ponytail` refreshes the install from its source; `muse plugins inspect ponytail` shows the version, skills, and hooks. Measured with Muse Code 1.4.0 / plugin 4.10.0 (id `ponytail`, six skills, one `session-start` hook), each sequence reproduced under a hermetic `HOME`.
+
 ### Codex
 
 ```bash
@@ -318,6 +341,7 @@ Which files map to which agent: [Agent portability](docs/agent-portability.md).
 |------|---------|
 | Claude Code | `/plugin remove ponytail` |
 | Codex | `codex plugin remove ponytail` |
+| Muse Code | `muse plugins remove ponytail` |
 | Devin CLI | `devin plugins remove ponytail` |
 | Grok Build | `grok plugin uninstall ponytail` |
 | Pi agent | `pi uninstall ponytail` |
